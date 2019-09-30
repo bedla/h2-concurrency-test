@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.6.xsd">
+    <!--NOTE: always set seq.incrementBy=20 (https://ntsim.uk/posts/how-to-use-hibernate-identifier-sequence-generators-properly)-->
+    <changeSet id="1" author="smid">
+        <createSequence incrementBy="20"
+                        minValue="1"
+                        ordered="true"
+                        sequenceName="seq_app_user_id"
+                        startValue="1"/>
+        <createTable tableName="app_user">
+            <column name="id" type="NUMBER(10)" defaultValue="seq_app_user_id.nextval">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="login" type="VARCHAR(64 CHAR)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="2" author="smid">
+        <createSequence incrementBy="20"
+                        minValue="1"
+                        ordered="true"
+                        sequenceName="seq_lead_id"
+                        startValue="1"/>
+        <createTable tableName="lead">
+            <column name="id" type="NUMBER(10)" defaultValue="seq_lead_id.nextval">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="version" type="NUMBER(10)" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="3" author="smid">
+        <createSequence incrementBy="20"
+                        minValue="1"
+                        ordered="true"
+                        sequenceName="seq_lead_activity_id"
+                        startValue="1"/>
+        <createTable tableName="lead_activity">
+            <column name="id" type="NUMBER(10)" defaultValue="seq_lead_activity_id.nextval">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="lead_id" type="NUMBER(10)">
+                <!--NULLable because of Unidirectional Hibernate relation-->
+                <!--https://vladmihalcea.com/the-best-way-to-map-a-onetomany-association-with-jpa-and-hibernate/-->
+                <constraints nullable="true"/>
+            </column>
+            <column name="discriminator" type="VARCHAR(32 CHAR)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="timeline" type="NUMBER(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="assign_rule_user_id" type="NUMBER(10)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="a_value" type="VARCHAR(256 CHAR)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="b_value" type="VARCHAR(256 CHAR)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="c_value" type="VARCHAR(256 CHAR)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <!--Lazy NOT-NULL checks-->
+        <!--https://vladmihalcea.com/the-best-way-to-map-the-single_table-inheritance-with-jpa-and-hibernate/-->
+        <sql><![CDATA[
+            ALTER TABLE lead_activity
+            ADD CONSTRAINT act_assign_user_check
+            CHECK (
+                CASE
+                    WHEN discriminator = 'ASSIGN_RULE_USER'
+                    THEN
+                        CASE
+                            WHEN assign_rule_user_id IS NOT NULL
+                            THEN 1
+                            ELSE 0
+                        END
+                    ELSE 1
+                END = 1
+            )
+        ]]></sql>
+        <sql><![CDATA[
+            ALTER TABLE lead_activity
+            ADD CONSTRAINT act_a_check
+            CHECK (
+                CASE
+                    WHEN discriminator = 'A'
+                    THEN
+                        CASE
+                            WHEN a_value IS NOT NULL
+                            THEN 1
+                            ELSE 0
+                        END
+                    ELSE 1
+                END = 1
+            )
+        ]]></sql>
+        <sql><![CDATA[
+            ALTER TABLE lead_activity
+            ADD CONSTRAINT act_b_check
+            CHECK (
+                CASE
+                    WHEN discriminator = 'B'
+                    THEN
+                        CASE
+                            WHEN b_value IS NOT NULL
+                            THEN 1
+                            ELSE 0
+                        END
+                    ELSE 1
+                END = 1
+            )
+        ]]></sql>
+        <sql><![CDATA[
+            ALTER TABLE lead_activity
+            ADD CONSTRAINT act_c_check
+            CHECK (
+                CASE
+                    WHEN discriminator = 'C'
+                    THEN
+                        CASE
+                            WHEN c_value IS NOT NULL
+                            THEN 1
+                            ELSE 0
+                        END
+                    ELSE 1
+                END = 1
+            )
+        ]]></sql>
+        <addForeignKeyConstraint baseColumnNames="assign_rule_user_id"
+                                 baseTableName="lead_activity"
+                                 constraintName="fk_leadactivity_assign_user"
+                                 onDelete="CASCADE"
+                                 referencedColumnNames="id"
+                                 referencedTableName="app_user"/>
+    </changeSet>
+    <changeSet id="998" author="smid">
+        <createSequence incrementBy="1"
+                        minValue="1"
+                        ordered="true"
+                        sequenceName="seq_timeline"
+                        startValue="1"/>
+    </changeSet>
+</databaseChangeLog>
