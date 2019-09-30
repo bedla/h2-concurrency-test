@@ -141,7 +141,7 @@
                                  referencedColumnNames="id"
                                  referencedTableName="app_user"/>
     </changeSet>
-    <changeSet id="998" author="smid">
+    <changeSet id="4" author="smid">
         <createSequence incrementBy="1"
                         minValue="1"
                         ordered="true"
